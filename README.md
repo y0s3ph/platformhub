@@ -4,6 +4,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-jph91-0A66C2?logo=linkedin)](https://linkedin.com/in/jph91)
 
 **Developer self-service portal for infrastructure provisioning.**
 
