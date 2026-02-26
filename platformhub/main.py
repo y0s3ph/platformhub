@@ -47,36 +47,36 @@ async def health():
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(request, "login.html")
 
 
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request})
+    return templates.TemplateResponse(request, "register.html")
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page(request: Request):
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+    return templates.TemplateResponse(request, "dashboard.html")
 
 
 @app.get("/catalog", response_class=HTMLResponse)
 async def catalog_page(request: Request):
-    return templates.TemplateResponse("catalog.html", {"request": request})
+    return templates.TemplateResponse(request, "catalog.html")
 
 
 @app.get("/new-request/{resource_type}", response_class=HTMLResponse)
 async def new_request_page(request: Request, resource_type: str):
     return templates.TemplateResponse(
-        "new_request.html", {"request": request, "resource_type": resource_type}
+        request, "new_request.html", {"resource_type": resource_type}
     )
 
 
 @app.get("/admin/reviews", response_class=HTMLResponse)
 async def reviews_page(request: Request):
-    return templates.TemplateResponse("reviews.html", {"request": request})
+    return templates.TemplateResponse(request, "reviews.html")
