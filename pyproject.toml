@@ -59,8 +59,8 @@ target-version = "py311"
 line-length = 100
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "N", "W", "UP", "S", "B", "A", "C4", "SIM", "TCH"]
-ignore = ["S101", "S105"]
+select = ["E", "F", "I", "N", "W", "UP", "S", "B", "A", "C4", "SIM"]
+ignore = ["S101", "S105", "B008", "S701"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

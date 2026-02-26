@@ -37,9 +37,7 @@ async def review(
     db: AsyncSession = Depends(get_db),
 ):
     """Approve or reject a resource request. Generates manifests on approval."""
-    result = await db.execute(
-        select(ResourceRequest).where(ResourceRequest.id == request_id)
-    )
+    result = await db.execute(select(ResourceRequest).where(ResourceRequest.id == request_id))
     req = result.scalar_one_or_none()
     if not req:
         raise HTTPException(status_code=404, detail="Request not found")
@@ -47,6 +45,6 @@ async def review(
     try:
         updated = await review_request(req, current_user, payload.action, payload.comment, db)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
     return updated

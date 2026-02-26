@@ -42,15 +42,21 @@ async def client(db_session: AsyncSession):
 @pytest.fixture
 async def auth_headers(client: AsyncClient) -> dict[str, str]:
     """Register a user and return auth headers."""
-    await client.post("/api/auth/register", json={
-        "username": "testdev",
-        "email": "dev@test.com",
-        "password": "testpass123",
-    })
-    res = await client.post("/api/auth/login", data={
-        "username": "testdev",
-        "password": "testpass123",
-    })
+    await client.post(
+        "/api/auth/register",
+        json={
+            "username": "testdev",
+            "email": "dev@test.com",
+            "password": "testpass123",
+        },
+    )
+    res = await client.post(
+        "/api/auth/login",
+        data={
+            "username": "testdev",
+            "password": "testpass123",
+        },
+    )
     token = res.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
 
@@ -58,8 +64,8 @@ async def auth_headers(client: AsyncClient) -> dict[str, str]:
 @pytest.fixture
 async def approver_headers(client: AsyncClient, db_session: AsyncSession) -> dict[str, str]:
     """Register an approver user and return auth headers."""
-    from platformhub.models import Role, User
     from platformhub.auth import hash_password
+    from platformhub.models import Role, User
 
     user = User(
         username="testapprover",
@@ -70,9 +76,12 @@ async def approver_headers(client: AsyncClient, db_session: AsyncSession) -> dic
     db_session.add(user)
     await db_session.commit()
 
-    res = await client.post("/api/auth/login", data={
-        "username": "testapprover",
-        "password": "approverpass123",
-    })
+    res = await client.post(
+        "/api/auth/login",
+        data={
+            "username": "testapprover",
+            "password": "approverpass123",
+        },
+    )
     token = res.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}

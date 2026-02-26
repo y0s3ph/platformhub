@@ -8,7 +8,6 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from platformhub.models import RequestStatus, ResourceType, Role
 
-
 # --- Auth ---
 
 

@@ -38,7 +38,8 @@ async def create_request(
         request_id=resource_request.id,
         action="created",
         actor_id=current_user.id,
-        details=f"Requested {payload.resource_type.value} '{payload.name}' in {payload.environment}",
+        details=f"Requested {payload.resource_type.value} '{payload.name}' "
+        f"in {payload.environment}",
     )
     db.add(audit)
     await db.commit()
@@ -67,9 +68,7 @@ async def get_request(
     db: AsyncSession = Depends(get_db),
 ):
     """Get a specific resource request by ID."""
-    result = await db.execute(
-        select(ResourceRequest).where(ResourceRequest.id == request_id)
-    )
+    result = await db.execute(select(ResourceRequest).where(ResourceRequest.id == request_id))
     req = result.scalar_one_or_none()
     if not req:
         raise HTTPException(status_code=404, detail="Request not found")

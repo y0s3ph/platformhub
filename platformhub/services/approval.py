@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,7 +29,7 @@ async def review_request(
     request.status = action
     request.reviewer_id = reviewer.id
     request.review_comment = comment
-    request.reviewed_at = datetime.now(tz=timezone.utc)
+    request.reviewed_at = datetime.now(tz=UTC)
 
     if action == RequestStatus.APPROVED:
         request.generated_manifest = generate_manifest(request)

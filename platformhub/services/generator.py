@@ -13,6 +13,7 @@ TEMPLATES_DIR = Path(__file__).parent.parent / "templates" / "manifests"
 
 _env = Environment(
     loader=FileSystemLoader(str(TEMPLATES_DIR)),
+    autoescape=False,
     keep_trailing_newline=True,
     trim_blocks=True,
     lstrip_blocks=True,

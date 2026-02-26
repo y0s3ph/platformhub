@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import enum
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, Enum, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -12,22 +12,22 @@ from platformhub.database import Base
 
 
 def _utcnow() -> datetime:
-    return datetime.now(tz=timezone.utc)
+    return datetime.now(tz=UTC)
 
 
-class Role(str, enum.Enum):
+class Role(enum.StrEnum):
     DEVELOPER = "developer"
     APPROVER = "approver"
     ADMIN = "admin"
 
 
-class RequestStatus(str, enum.Enum):
+class RequestStatus(enum.StrEnum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
 
 
-class ResourceType(str, enum.Enum):
+class ResourceType(enum.StrEnum):
     K8S_NAMESPACE = "k8s_namespace"
     S3_BUCKET = "s3_bucket"
     RDS_DATABASE = "rds_database"
