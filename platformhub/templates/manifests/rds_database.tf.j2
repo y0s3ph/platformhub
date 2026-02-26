@@ -1,0 +1,35 @@
+resource "aws_db_instance" "{{ name | replace('-', '_') }}" {
+  identifier     = "{{ name }}-{{ environment }}"
+  engine         = "postgres"
+  engine_version = "{{ params.get('engine_version', '16') }}"
+  instance_class = "{{ params.get('instance_class', 'db.t3.micro') }}"
+
+  allocated_storage     = {{ params.get('storage_gb', '20') }}
+  max_allocated_storage = {{ (params.get('storage_gb', '20') | int) * 2 }}
+  storage_encrypted     = true
+
+  db_name  = "{{ name | replace('-', '_') }}"
+  username = "{{ name | replace('-', '_') }}_admin"
+  password = var.{{ name | replace('-', '_') }}_db_password
+
+  multi_az            = {{ params.get('multi_az', 'false') }}
+  publicly_accessible = false
+  skip_final_snapshot = {{ 'true' if environment == 'dev' else 'false' }}
+
+  backup_retention_period = {{ '1' if environment == 'dev' else '7' }}
+
+  vpc_security_group_ids = [aws_security_group.{{ name | replace('-', '_') }}_db.id]
+  db_subnet_group_name   = aws_db_subnet_group.{{ name | replace('-', '_') }}.name
+
+  tags = {
+    Name        = "{{ name }}"
+    Environment = "{{ environment }}"
+    ManagedBy   = "platformhub"
+  }
+}
+
+variable "{{ name | replace('-', '_') }}_db_password" {
+  description = "Master password for {{ name }} database"
+  type        = string
+  sensitive   = true
+}
