@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}New Request — PlatformHub{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">New Resource Request</h1>
+
+    <div id="error-msg" class="hidden mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700"></div>
+    <div id="success-msg" class="hidden mb-4 rounded-lg bg-green-50 p-4 text-sm text-green-700"></div>
+
+    <form id="request-form" class="bg-white rounded-xl shadow p-6 border border-gray-100 space-y-6">
+        <div>
+            <label class="block text-sm font-medium text-gray-900 mb-1">Resource Type</label>
+            <p id="resource-display" class="text-indigo-600 font-semibold"></p>
+        </div>
+        <div>
+            <label for="name" class="block text-sm font-medium text-gray-900">Resource Name</label>
+            <input type="text" id="name" name="name" required pattern="^[a-z][a-z0-9-]*$" minlength="3" maxlength="100"
+                   placeholder="my-service"
+                   class="mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            <p class="mt-1 text-xs text-gray-400">Lowercase letters, numbers, and hyphens only</p>
+        </div>
+        <div>
+            <label for="environment" class="block text-sm font-medium text-gray-900">Environment</label>
+            <select id="environment" name="environment" required
+                    class="mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <option value="dev">Development</option>
+                <option value="staging">Staging</option>
+                <option value="production">Production</option>
+            </select>
+        </div>
+        <div id="params-container"></div>
+        <button type="submit"
+                class="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-500 transition">
+            Submit Request
+        </button>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const resourceType = '{{ resource_type }}';
+let catalogItem = null;
+
+async function loadParams() {
+    const res = await fetch(`/api/catalog/${resourceType}`);
+    if (!res.ok) { window.location.href = '/catalog'; return; }
+    catalogItem = await res.json();
+    document.getElementById('resource-display').textContent = catalogItem.display_name;
+
+    const container = document.getElementById('params-container');
+    container.innerHTML = catalogItem.parameters.map(p => {
+        if (p.options) {
+            return `<div>
+                <label for="param-${p.name}" class="block text-sm font-medium text-gray-900">${p.label}</label>
+                <select id="param-${p.name}" name="${p.name}" class="mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 sm:text-sm">
+                    ${p.options.map(o => `<option value="${o}" ${o === p.default ? 'selected' : ''}>${o}</option>`).join('')}
+                </select>
+                <p class="mt-1 text-xs text-gray-400">${p.description}</p>
+            </div>`;
+        }
+        if (p.type === 'boolean') {
+            return `<div class="flex items-center gap-3">
+                <input type="checkbox" id="param-${p.name}" name="${p.name}" ${p.default === 'true' ? 'checked' : ''}
+                       class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <label for="param-${p.name}" class="text-sm font-medium text-gray-900">${p.label}</label>
+                <span class="text-xs text-gray-400">${p.description}</span>
+            </div>`;
+        }
+        return `<div>
+            <label for="param-${p.name}" class="block text-sm font-medium text-gray-900">${p.label}</label>
+            <input type="${p.type === 'number' ? 'number' : 'text'}" id="param-${p.name}" name="${p.name}"
+                   value="${p.default || ''}" ${p.required ? 'required' : ''}
+                   class="mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 sm:text-sm">
+            <p class="mt-1 text-xs text-gray-400">${p.description}</p>
+        </div>`;
+    }).join('');
+}
+
+document.getElementById('request-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const params = {};
+    if (catalogItem) {
+        catalogItem.parameters.forEach(p => {
+            const el = document.getElementById(`param-${p.name}`);
+            params[p.name] = p.type === 'boolean' ? String(el.checked) : el.value;
+        });
+    }
+
+    const res = await authFetch('/api/requests/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            resource_type: resourceType,
+            name: document.getElementById('name').value,
+            environment: document.getElementById('environment').value,
+            parameters: params,
+        }),
+    });
+
+    if (res.ok) {
+        document.getElementById('success-msg').textContent = 'Request submitted successfully! Awaiting approval.';
+        document.getElementById('success-msg').classList.remove('hidden');
+        document.getElementById('error-msg').classList.add('hidden');
+        document.getElementById('request-form').reset();
+        setTimeout(() => window.location.href = '/dashboard', 1500);
+    } else {
+        const err = await res.json();
+        document.getElementById('error-msg').textContent = err.detail || 'Submission failed';
+        document.getElementById('error-msg').classList.remove('hidden');
+    }
+});
+
+loadParams();
+</script>
+{% endblock %}

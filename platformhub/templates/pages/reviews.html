@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Reviews — PlatformHub{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold text-gray-900 mb-6">Pending Reviews</h1>
+
+<div id="pending-list" class="space-y-4"></div>
+<div id="empty-state" class="hidden text-center py-16 text-gray-400">
+    <p class="text-lg">No pending requests</p>
+    <p class="text-sm mt-2">All requests have been reviewed.</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const typeLabels = {
+    k8s_namespace: 'K8s Namespace',
+    s3_bucket: 'S3 Bucket',
+    rds_database: 'RDS Database',
+};
+
+async function loadPending() {
+    const res = await authFetch('/api/admin/pending');
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    if (res.status === 403) { window.location.href = '/dashboard'; return; }
+    const requests = await res.json();
+    const list = document.getElementById('pending-list');
+
+    if (requests.length === 0) {
+        document.getElementById('empty-state').classList.remove('hidden');
+        return;
+    }
+
+    list.innerHTML = requests.map(r => {
+        let params = {};
+        try { params = JSON.parse(r.parameters); } catch {}
+        const paramStr = Object.entries(params).map(([k, v]) => `${k}: ${v}`).join(', ');
+
+        return `
+        <div class="bg-white rounded-xl shadow p-5 border border-gray-100" id="request-${r.id}">
+            <div class="flex justify-between items-start mb-3">
+                <div>
+                    <span class="font-semibold text-gray-900 text-lg">${r.name}</span>
+                    <p class="text-sm text-gray-500">${typeLabels[r.resource_type]} &middot; ${r.environment} &middot; ${new Date(r.created_at).toLocaleDateString()}</p>
+                    ${paramStr ? `<p class="text-xs text-gray-400 mt-1">${paramStr}</p>` : ''}
+                </div>
+                <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">pending</span>
+            </div>
+            <div class="flex gap-3 mt-4">
+                <input type="text" id="comment-${r.id}" placeholder="Review comment (optional)"
+                       class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <button onclick="reviewRequest(${r.id}, 'approved')"
+                        class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500 transition cursor-pointer">
+                    Approve
+                </button>
+                <button onclick="reviewRequest(${r.id}, 'rejected')"
+                        class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 transition cursor-pointer">
+                    Reject
+                </button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function reviewRequest(id, action) {
+    const comment = document.getElementById(`comment-${id}`).value;
+    const res = await authFetch(`/api/admin/${id}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, comment }),
+    });
+
+    if (res.ok) {
+        const el = document.getElementById(`request-${id}`);
+        el.innerHTML = `<p class="text-sm text-gray-500 py-2">Request ${action}. Reloading...</p>`;
+        setTimeout(loadPending, 800);
+    }
+}
+
+loadPending();
+</script>
+{% endblock %}

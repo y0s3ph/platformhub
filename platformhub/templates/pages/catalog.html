@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Catalog — PlatformHub{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold text-gray-900 mb-6">Infrastructure Catalog</h1>
+<p class="text-gray-500 mb-8">Select a resource type to create a new provisioning request.</p>
+
+<div id="catalog-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const icons = {
+    k8s_namespace: '<svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>',
+    s3_bucket: '<svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>',
+    rds_database: '<svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>',
+};
+
+async function loadCatalog() {
+    const res = await fetch('/api/catalog/');
+    const items = await res.json();
+    const grid = document.getElementById('catalog-grid');
+    grid.innerHTML = items.map(item => `
+        <a href="/new-request/${item.resource_type}" class="bg-white rounded-xl shadow p-6 border border-gray-100 hover:border-indigo-300 hover:shadow-md transition block">
+            <div class="mb-4">${icons[item.resource_type] || ''}</div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">${item.display_name}</h3>
+            <p class="text-sm text-gray-500 mb-4">${item.description}</p>
+            <span class="text-sm font-medium text-indigo-600">Request &rarr;</span>
+        </a>
+    `).join('');
+}
+
+loadCatalog();
+</script>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — PlatformHub{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">My Requests</h1>
+    <a href="/catalog" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-500 transition">
+        + New Request
+    </a>
+</div>
+
+<div id="requests-list" class="space-y-4"></div>
+<div id="empty-state" class="hidden text-center py-16 text-gray-400">
+    <p class="text-lg">No requests yet</p>
+    <p class="text-sm mt-2">Head to the <a href="/catalog" class="text-indigo-600 hover:underline">catalog</a> to create your first request.</p>
+</div>
+
+<div id="manifest-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[80vh] flex flex-col">
+        <div class="flex justify-between items-center p-4 border-b">
+            <h3 class="font-semibold text-gray-900">Generated Manifest</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-xl cursor-pointer">&times;</button>
+        </div>
+        <pre id="manifest-content" class="p-4 overflow-auto text-sm bg-gray-50 flex-1"><code></code></pre>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const statusColors = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    approved: 'bg-green-100 text-green-800',
+    rejected: 'bg-red-100 text-red-800',
+};
+
+const typeLabels = {
+    k8s_namespace: 'K8s Namespace',
+    s3_bucket: 'S3 Bucket',
+    rds_database: 'RDS Database',
+};
+
+async function loadRequests() {
+    const res = await authFetch('/api/requests/');
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    const requests = await res.json();
+    const list = document.getElementById('requests-list');
+
+    if (requests.length === 0) {
+        document.getElementById('empty-state').classList.remove('hidden');
+        return;
+    }
+
+    list.innerHTML = requests.map(r => `
+        <div class="bg-white rounded-xl shadow p-5 border border-gray-100 flex justify-between items-center">
+            <div>
+                <div class="flex items-center gap-3 mb-1">
+                    <span class="font-semibold text-gray-900">${r.name}</span>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status]}">${r.status}</span>
+                </div>
+                <p class="text-sm text-gray-500">${typeLabels[r.resource_type] || r.resource_type} &middot; ${r.environment} &middot; ${new Date(r.created_at).toLocaleDateString()}</p>
+                ${r.review_comment ? `<p class="text-sm text-gray-400 mt-1">Review: ${r.review_comment}</p>` : ''}
+            </div>
+            <div class="flex gap-2">
+                ${r.status === 'approved' && r.generated_manifest ? `<button onclick="showManifest(${r.id})" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer">View Manifest</button>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+async function showManifest(id) {
+    const res = await authFetch(`/api/requests/${id}`);
+    const req = await res.json();
+    document.getElementById('manifest-content').querySelector('code').textContent = req.generated_manifest || 'No manifest available';
+    document.getElementById('manifest-modal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('manifest-modal').classList.add('hidden');
+}
+
+loadRequests();
+</script>
+{% endblock %}

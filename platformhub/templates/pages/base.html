@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PlatformHub{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        .htmx-indicator { display: none; }
+        .htmx-request .htmx-indicator { display: inline-block; }
+    </style>
+</head>
+<body class="h-full" hx-headers='{"Authorization": "Bearer " + (localStorage.getItem("token") || "")}'>
+    <nav class="bg-white border-b border-gray-200">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="flex h-16 justify-between items-center">
+                <div class="flex items-center gap-8">
+                    <a href="/" class="text-xl font-bold text-indigo-600">PlatformHub</a>
+                    <div id="nav-links" class="hidden sm:flex gap-6 text-sm font-medium text-gray-600">
+                        <a href="/catalog" class="hover:text-indigo-600 transition">Catalog</a>
+                        <a href="/dashboard" class="hover:text-indigo-600 transition">My Requests</a>
+                        <a href="/admin/reviews" id="nav-reviews" class="hover:text-indigo-600 transition hidden">Reviews</a>
+                        <a href="/docs" class="hover:text-indigo-600 transition" target="_blank">API Docs</a>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="user-info" class="text-sm text-gray-500"></span>
+                    <button id="logout-btn" class="hidden text-sm text-red-600 hover:text-red-800 font-medium cursor-pointer" onclick="logout()">Logout</button>
+                    <a id="login-link" href="/login" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Login</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        function getToken() { return localStorage.getItem('token'); }
+        function getUser() { try { return JSON.parse(localStorage.getItem('user')); } catch { return null; } }
+
+        function updateNav() {
+            const user = getUser();
+            const token = getToken();
+            if (token && user) {
+                document.getElementById('nav-links').classList.remove('hidden');
+                document.getElementById('user-info').textContent = user.username + ' (' + user.role + ')';
+                document.getElementById('logout-btn').classList.remove('hidden');
+                document.getElementById('login-link').classList.add('hidden');
+                if (user.role === 'approver' || user.role === 'admin') {
+                    document.getElementById('nav-reviews').classList.remove('hidden');
+                }
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        }
+
+        function authFetch(url, options = {}) {
+            const token = getToken();
+            if (token) {
+                options.headers = { ...options.headers, 'Authorization': 'Bearer ' + token };
+            }
+            return fetch(url, options);
+        }
+
+        updateNav();
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
